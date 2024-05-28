@@ -1,0 +1,12 @@
+{
+	"freq": 8,
+	"humanNetworkInputWidth": 1280,
+	"humanNetworkInputHeight": 720,
+	"humanRealInputWidth": 1280,
+	"humanRealInputHeight": 720,
+	"humanRectPadding": 10,
+	"minWidth": 10,
+	"minHeight": 10,
+	"maxWidth": 150,
+	"maxHeight": 150
+}

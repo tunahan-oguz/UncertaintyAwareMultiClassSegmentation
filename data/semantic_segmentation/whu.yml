@@ -1,0 +1,68 @@
+dataset:
+  train:
+    type: WHUBuildingDataset
+    num_workers: 6
+    data_root: /home/oguz/cv-projects/datasets/WHU/train
+    mode: train
+    img_dir: Image
+    mask_dir: Mask
+    img_suffix: .png
+    mask_suffix: .png
+
+  valid:
+    type: WHUBuildingDataset
+    num_workers: 6
+    data_root: /home/oguz/cv-projects/datasets/WHU/val
+    mode: val
+    img_dir: Image
+    mask_dir: Mask
+    img_suffix: .png
+    mask_suffix: .png
+
+model:
+  type: UANet_VGG
+  args:
+    channel: 32
+    num_classes: 2
+
+callbacks:
+  ModelCheckpoint:
+    every_n_epochs: 1
+    save_top_k: 1
+    monitor: validation/loss
+    verbose: True
+
+losses:
+  - loss:
+      type: UncertaintyAwareCE
+
+metrics:
+  - metric:
+      type: PixelAccuracy
+  - metric:
+      type: IoU
+      args:
+        K: 2
+
+hypes:
+  batch_size: 8
+  epochs: 105
+  lr: 0.0001
+
+optimizers:
+  AdamW:
+    scheduler:
+      type: CosineAnnealingWarmRestarts
+      args:
+        T_0: 15
+        T_mult: 2
+      monitor: validation/loss
+    args:
+      weight_decay: 0.0025
+
+hardware:
+  accelerator: gpu
+  devices: -1
+
+loggers:
+  tensorboard:
