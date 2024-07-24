@@ -3,12 +3,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 from torchvision import models
-import warnings
 
 from train_app.registers.model_registry import model_registry
 from train_app.models.base import SemanticSegmentationAdapter
-
-warnings.filterwarnings('ignore')
 
 class BasicConv2d(nn.Module):
     def __init__(self, in_planes, out_planes, kernel_size, stride=1, padding=0, dilation=1):
@@ -24,36 +21,6 @@ class BasicConv2d(nn.Module):
         x = self.bn(x)
         x = self.relu(x)
         return x
-
-
-
-class Uncertainty_Rank_Algorithm(nn.Module):
-    def __init__(self, ranks):
-        super(Uncertainty_Rank_Algorithm,self).__init__()
-        self.prob = nn.Sigmoid()
-        self.ranks = ranks
-    def forward(self, map):
-        prob_map = self.prob(map)
-        fore_uncertainty_map = prob_map-0.5
-        back_uncertainty_map = 0.5 - prob_map
-
-        fore_rank_map = torch.zeros_like(map)
-        back_rank_map = torch.zeros_like(map)
-
-        fore_rank_map[fore_uncertainty_map>0.] = self.ranks[-1]
-        fore_rank_map[fore_uncertainty_map>0.1] = self.ranks[-2]
-        fore_rank_map[fore_uncertainty_map>0.2] = self.ranks[-3]
-        fore_rank_map[fore_uncertainty_map>0.3] = self.ranks[-4]
-        fore_rank_map[fore_uncertainty_map>0.4] = self.ranks[-5]
-
-        back_rank_map[back_uncertainty_map>0.] = self.ranks[-1]
-        back_rank_map[back_uncertainty_map>0.1] = self.ranks[-2]
-        back_rank_map[back_uncertainty_map>0.2] = self.ranks[-3]
-        back_rank_map[back_uncertainty_map>0.3] = self.ranks[-4]
-        back_rank_map[back_uncertainty_map>0.4] = self.ranks[-5]
-
-
-        return fore_rank_map.detach(), back_rank_map.detach()
 
 class MultiClassUAFM(nn.Module):
 
@@ -344,10 +311,10 @@ class MBDC(nn.Module):
         x = self.relu(x_cat + self.conv_res(x))
         return x
 
-@model_registry.register("MC_UAVGG")
-class MC_UAVGG(SemanticSegmentationAdapter):
+@model_registry.register("MCCMNet")
+class MCCMNet(SemanticSegmentationAdapter):
     def __init__(self, channel, num_classes, *args, **kwargs):
-        super(MC_UAVGG, self).__init__(*args, **kwargs)
+        super(MCCMNet, self).__init__(*args, **kwargs)
         vgg16_bn = models.vgg16_bn(pretrained=True)
         self.inc = vgg16_bn.features[:5]  # 64
         self.down1 = vgg16_bn.features[5:12]  # 64

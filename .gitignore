@@ -10,3 +10,4 @@ train_app.egg-info/
 build/
 converted_models/
 dist/
+images/

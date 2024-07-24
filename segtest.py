@@ -1,4 +1,5 @@
 import argparse
+import os
 import cv2
 import numpy as np
 import yaml
@@ -26,7 +27,7 @@ def get_data(conf_p):
     dataset_conf.pop("type", None)
     dataset_conf["mode"] = "test"
     dataset = dataset_class(**dataset_conf)
-    loader = DataLoader(dataset, batch_size=1, shuffle=False, drop_last=False, num_workers=8, pin_memory=False)
+    loader = DataLoader(dataset, batch_size=1, shuffle=False, drop_last=False, num_workers=6, pin_memory=False)
     return dataset, loader
 
 def get_model(conf_p, ckpt):
@@ -35,7 +36,7 @@ def get_model(conf_p, ckpt):
     model_config = config["model"]
     weights = torch.load(ckpt)
     model, _ = utils.generate_model(model_config)
-    model.load_state_dict(weights)
+    model.load_state_dict(weights['state_dict'] if 'state_dict' in weights else weights)
     
     return model.eval()
 
@@ -78,10 +79,8 @@ def main(args):
     model.cuda()
     ev = get_metrics(args)
     
-    
     if args.vis:
-        
-        for inp in dataset:
+        for inp in tqdm.tqdm(dataset):
             org_image = cv2.resize(cv2.imread(inp["path"]), inp["inputs"].shape[1 :])
             image =[im.unsqueeze(0).cuda() for im in inp["inputs"]] if isinstance(inp["inputs"], list) else inp["inputs"].unsqueeze(0).cuda()
             mask = inp["mask"].unsqueeze(0).cuda()
@@ -92,11 +91,12 @@ def main(args):
             predicted_mask = torch.argmax(probs, 1).squeeze().cpu().numpy().astype(np.uint8)
 
 
-            entropy_map = utils.get_entropy(logits)
-            entropy_heat = utils.generate_heatmap(entropy_map)
+            # entropy_map = utils.get_entropy(logits)
+            entropy_heat = utils.tensor_to_heatmap(logits)
+
             colored_mask = paint_mask(mask)
             colored_prediction = paint_mask(torch.tensor(predicted_mask))
-            
+
             cv2.imshow("Entropy", entropy_heat)
             cv2.imshow("Mask", cv2.cvtColor(colored_mask, cv2.COLOR_BGR2RGB))
             cv2.imshow("Image", org_image)
@@ -110,30 +110,30 @@ def main(args):
     else:
         for batch in tqdm.tqdm(loader):
             image = batch["inputs"].cuda()
-            mask = batch["mask"]
+            mask = batch["mask"].cuda()
             with torch.no_grad():
                 logits = model(image)
                 logits = logits[-1] if isinstance(logits, tuple) else logits
                 probs = torch.softmax(logits, 1)
             predicted_mask = torch.argmax(logits, 1)
             
-            ev.add_batch(mask.numpy(), predicted_mask.cpu().numpy())
+            ev.add_batch(mask, logits)
 
-                        
-        print("IoU", ev.Intersection_over_Union())
-        print("PixelAccuracy", ev.OA())
-        print("Precision", ev.Precision())
-        print("Recall", ev.Recall())
-        print("F1", ev.F1())
+        ev.eval()
+        print("IoU", ev.Intersection_over_Union)
+        print("PixelAccuracy", ev.pixelAccuracy)
+        print("Precision", ev.Precision)
+        print("Recall", ev.Recall)
+        print("F1", ev.F1)
 
         
 
     
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--conf", required=False, default="/home/oguz/cv-projects/models/Mass/without_ura/mass.yml")
-    parser.add_argument("--vis", required=False, default=False)
-    parser.add_argument("--pth", required=False, default="/home/oguz/cv-projects/models/Mass/without_ura/epoch=18-step=2603.pth")
+    parser.add_argument("--conf", required=False, default="/home/oguz/cv-projects/models/AttentionUNet/attenunet.yml")
+    parser.add_argument("--vis", required=False, default=True, type=bool)
+    parser.add_argument("--pth", required=False, default="/home/oguz/cv-projects/models/AttentionUNet/85.pth")
     parser.add_argument("--K", required=False, default=8, type=int)
 
     args = parser.parse_args()

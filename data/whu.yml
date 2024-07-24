@@ -1,33 +1,36 @@
 dataset:
   train:
-    type: RescueNet
+    type: WHUBuildingDataset
     num_workers: 6
-    root_dir: /home/oguz/cv-projects/datasets/RescueNet
+    data_root: PATH_TO_WHU/WHU/train
     mode: train
-    n_classes: &N 8
-    img_sz: [720, 720]
-  valid:
-    type: RescueNet
-    num_workers: 6
-    root_dir: /home/oguz/cv-projects/datasets/RescueNet
-    mode: val
-    n_classes: *N
-    img_sz: [720, 720]
+    img_dir: Image
+    mask_dir: Mask
+    img_suffix: .png
+    mask_suffix: .png
 
+  valid:
+    type: WHUBuildingDataset
+    num_workers: 6
+    data_root: PATH_TO_WHU/WHU/val
+    mode: val
+    img_dir: Image
+    mask_dir: Mask
+    img_suffix: .png
+    mask_suffix: .png
 
 model:
-  type: MC_UAVGG
+  type: UANet_VGG
   args:
     channel: 32
-    num_classes: *N
+    num_classes: 2
 
 callbacks:
   ModelCheckpoint:
     every_n_epochs: 1
-    save_top_k: 5
-    monitor: validation/IoU
+    save_top_k: 1
+    monitor: validation/loss
     verbose: True
-    mode: max
 
 losses:
   - loss:
@@ -39,10 +42,10 @@ metrics:
   - metric:
       type: IoU
       args:
-        K: *N
+        K: 2
 
 hypes:
-  batch_size: 4
+  batch_size: 8
   epochs: 105
   lr: 0.0001
 

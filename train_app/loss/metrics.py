@@ -495,15 +495,9 @@ class MAP(BaseMetric):
             output = torch.argmax(torch.softmax(predictions, 1), 1)
         assert (output.dim() in [1, 2, 3])
         assert output.shape == target.shape
-        output = output.view(-1)
-        target = target.view(-1)
-        output[target == self.ignore_index] = self.ignore_index
-        
-        true_positives = torch.histc((output[target == output].float()), bins=self.K, min=0, max=self.K-1)
-        predicted_positives = torch.histc(output.float(), bins=self.K, min=0, max=self.K-1)
-        
-        precision = (true_positives + self.smooth) / (predicted_positives + self.smooth)
-        return precision.mean()
+        output = output.view(-1).cpu().numpy()
+        target = target.view(-1).cpu().numpy()
+        return precision_score(target, output, labels=range(self.K), average="weighted") 
 
 class MAR(BaseMetric):
     def __init__(self, K, smooth=1e-7, ignore_index=-1, *args, **kwargs):
@@ -521,15 +515,9 @@ class MAR(BaseMetric):
             output = torch.argmax(torch.softmax(predictions, 1), 1)
         assert (output.dim() in [1, 2, 3])
         assert output.shape == target.shape
-        output = output.view(-1)
-        target = target.view(-1)
-        output[target == self.ignore_index] = self.ignore_index
-        
-        true_positives = torch.histc((output[target == output].float()), bins=self.K, min=0, max=self.K-1)
-        actual_positives = torch.histc(target.float(), bins=self.K, min=0, max=self.K-1)
-        
-        recall = (true_positives + self.smooth) / (actual_positives + self.smooth)
-        return recall.mean()
+        output = output.view(-1).cpu().numpy()
+        target = target.view(-1).cpu().numpy()
+        return recall_score(target, output, labels=range(self.K), average="weighted")
 
 class MAF1(BaseMetric):
     def __init__(self, K, smooth=1e-7, ignore_index=-1, *args, **kwargs):
@@ -547,16 +535,7 @@ class MAF1(BaseMetric):
             output = torch.argmax(torch.softmax(predictions, 1), 1)
         assert (output.dim() in [1, 2, 3])
         assert output.shape == target.shape
-        output = output.view(-1)
-        target = target.view(-1)
+        output = output.view(-1).cpu().numpy()
+        target = target.view(-1).cpu().numpy()
         output[target == self.ignore_index] = self.ignore_index
-        
-        true_positives = torch.histc((output[target == output].float()), bins=self.K, min=0, max=self.K-1)
-        predicted_positives = torch.histc(output.float(), bins=self.K, min=0, max=self.K-1)
-        actual_positives = torch.histc(target.float(), bins=self.K, min=0, max=self.K-1)
-        
-        precision = (true_positives + self.smooth) / (predicted_positives + self.smooth)
-        recall = (true_positives + self.smooth) / (actual_positives + self.smooth)
-        
-        f1 = 2 * (precision * recall) / (precision + recall + self.smooth)
-        return f1.mean()
+        return f1_score(target, output, labels=range(self.K), average="weighted")

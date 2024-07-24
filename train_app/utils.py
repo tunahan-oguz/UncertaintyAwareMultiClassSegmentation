@@ -858,15 +858,23 @@ def get_entropy(logits):
     return torch.sum(-1 * log_p * p, dim=1)
 
 
-def generate_heatmap(tensor : torch.Tensor):
-    # Convert tensor to numpy array
-    array = tensor.squeeze().cpu().numpy()
+def tensor_to_heatmap(tensor):
+    # Apply softmax to the tensor along the channel dimension
+    softmaxed_tensor = torch.softmax(tensor, dim=1)
     
-    # Normalize values between 0 and 1
-    normalized_array = (array - array.min()) / (array.max() - array.min())
+    # Find the maximum probability per pixel (max along the channel dimension)
+    max_probs, _ = torch.max(softmaxed_tensor, dim=1)
     
-    # Apply colormap
-    heatmap = plt.cm.hot(normalized_array)
-    heatmap[:, :, -1] *= heatmap[:, :, 0]
+    # Convert to numpy for visualization
+    max_probs_np = max_probs.cpu().detach().numpy()
     
-    return (heatmap[:, :, 1:] * 255).astype(np.uint8)
+    # Normalize the max_probs to the range [0, 1] for better visualization
+    min_val = np.min(max_probs_np)
+    max_val = np.max(max_probs_np)
+    normalized_probs = (max_probs_np - min_val) / (max_val - min_val)
+    
+    img = np.reshape(normalized_probs, normalized_probs.shape[-2:])
+    heatmap = plt.get_cmap('turbo')(img)[:, :, :3]  # Get the RGB values from the colormap
+    heatmap = (heatmap * 255).astype(np.uint8)  # Convert to 8-bit image
+    
+    return heatmap

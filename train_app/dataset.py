@@ -107,6 +107,24 @@ class Dataset(torch.utils.data.Dataset):
                 tensor.append(Dataset.to_tensor(img))
         return tensor
 
+
+class TorchVisionDataset(Dataset):
+    def __init__(self, dataset, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.dataset = dataset
+
+    def __len__(self):
+        return len(self.dataset)
+
+    def __getitem__(self, idx):
+        img, label = self.dataset[idx]
+        img = np.asarray(img, dtype=np.uint8)  # .transpose(-1, 0, 1)
+
+        transformed = self.apply_augmentations(images=[img])
+        images = self.images_to_tensors(transformed["images"])[0]
+
+        return {"inputs": images, "labels": label}
 class RescueNet(Dataset):
     """RescueNet-v2.0 dataset: ....
 
