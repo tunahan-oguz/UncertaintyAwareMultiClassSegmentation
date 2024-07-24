@@ -41,7 +41,7 @@ pip install -r requirements.txt && export PYTHONPATH=.
 To train the MCCM-Net model on RescueNet dataset, run:
 
 ```sh
-python train.py --data data/mccm-net.yml --project project_name 
+python3 train_app/scripts/train.py --data data/mccm-net.yml --project project_name 
 ```
 This script will create the following directories in the workspace run/train/project_name/weights, and under this folder you will find the checkpoints of your training.
 
@@ -50,7 +50,7 @@ This script will create the following directories in the workspace run/train/pro
 To evaluate a trained model, run:
 
 ```sh
-python segtest.py --pth path_to_your_model_checkpoint --conf config_file_used_to_train_the_model --K num_classes
+python3 segtest.py --pth path_to_your_model_checkpoint --conf config_file_used_to_train_the_model --K num_classes
 ```
 
 Optional command line arguments of segtest.py:
@@ -60,7 +60,7 @@ Optional command line arguments of segtest.py:
 
 We would like to thank the authors of U-Net, Attention U-Net, and UA-Net for their contributions to the field of deep learning for image segmentation, which greatly inspired this work.
 
-## Citation
+<!-- ## Citation
 
 If you find this work useful in your research, please consider citing our paper:
 
@@ -71,7 +71,7 @@ If you find this work useful in your research, please consider citing our paper:
   booktitle={SPIE Asia Pacific Remote Sensing},
   year={2024}
 }
-```
+``` -->
 
 ## License
 
