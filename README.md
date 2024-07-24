@@ -75,7 +75,7 @@ If you find this work useful in your research, please consider citing our paper:
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/tunahan-oguz/UncertaintyAwareMultiClassSegmentation/blob/main/LICENSE) file for details.
 
 ---
 
