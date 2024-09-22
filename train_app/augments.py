@@ -2,10 +2,6 @@ from __future__ import annotations
 
 import random
 
-import cv2
-import torch
-import torchvision
-
 
 class BaseCompose:
     """Base class for composing and preprocessing data for transformations.

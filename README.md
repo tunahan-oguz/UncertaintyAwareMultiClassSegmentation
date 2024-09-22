@@ -41,7 +41,7 @@ pip install -r requirements.txt && export PYTHONPATH=.
 To train the MCCM-Net model on RescueNet dataset, run:
 
 ```sh
-python3 train_app/scripts/train.py --data data/mccm-net.yml --project project_name 
+python3 train_app/scripts/train.py train --data data/mccm-net.yml --project project_name 
 ```
 This script will create the following directories in the workspace run/train/project_name/weights, and under this folder you will find the checkpoints of your training.
 

@@ -20,8 +20,6 @@ import numpy as np
 import pytorch_lightning as pl
 import pytorch_lightning.callbacks
 import torch
-import torch_snippets  # noqa
-import torchvision  # noqa
 import wandb
 import yaml
 from pytorch_lightning.utilities.rank_zero import rank_zero_only

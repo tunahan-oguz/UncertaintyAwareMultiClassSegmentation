@@ -1,15 +1,16 @@
+# This is the training configuration of MCCMNET, which is claimed to be state-of-the-art on the RescueNet dataset.
 dataset:
   train:
     type: RescueNet
     num_workers: 6
-    root_dir: Path_To_RescueNet
+    root_dir: /home/tuntun/datasets/RescueNet # path to the root folder of data 
     mode: train
     n_classes: &N 8
     img_sz: [720, 720]
   valid:
     type: RescueNet
     num_workers: 6
-    root_dir: Path_To_RescueNet
+    root_dir: /home/tuntun/datasets/RescueNet # path to the root folder of data 
     mode: val
     n_classes: *N
     img_sz: [720, 720]
