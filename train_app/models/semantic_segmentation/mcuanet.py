@@ -30,9 +30,9 @@ class MultiClassUAFM(nn.Module):
         x = torch.clamp(x, min=1)
         return x.unsqueeze(1).detach()
 
-    def __init__(self, high_channel, low_channel,out_channel,num_classes):
+    def __init__(self, high_channel, low_channel,out_channel,num_classes, uncertainty=True):
         super(MultiClassUAFM, self).__init__()
-        self.rank = MultiClassUAFM.rank_algorithm
+        self.rank = MultiClassUAFM.rank_algorithm if uncertainty else lambda x: torch.ones(x.shape[0], 1, x.shape[2], x.shape[3], device=x.device)
         self.high_channel = high_channel
         self.low_channel = low_channel
         self.out_channel = out_channel
@@ -234,47 +234,77 @@ class SemanticFPNDecoder(nn.Module):
         return output
     
 class CGM(nn.Module):
-    def __init__(self):
+    def __init__(self, num_classes):
         super(CGM, self).__init__()
-        self.gamma = nn.Parameter(torch.zeros(1))
+        self.gamma = nn.Parameter(torch.zeros(1, 1, 1, 1, num_classes))
         self.prob = nn.Sigmoid()
-
+    
     def forward(self, feature, map):
-        map = map[:,1,:,:].unsqueeze(1)
+        features = []
+        for i in range(map.shape[1]):
+            features.append(self.cgm(feature, map, i).unsqueeze(-1))
+        return feature + (torch.cat(features, dim=-1) * self.gamma).sum(-1)
+        
+    
+    def cgm(self, feature, map, cls_idx):
+        cls_pred = map[:,cls_idx,:,:].unsqueeze(1)
         m_batchsize, C, height, width = feature.size()
         proj_query = feature.view(m_batchsize, C, -1)
-        proj_key = map.view(m_batchsize, 1, -1).permute(0, 2, 1)
+        proj_key = cls_pred.view(m_batchsize, 1, -1).permute(0, 2, 1)
         attention = torch.bmm(proj_query, proj_key)
         attention = attention.unsqueeze(2)
         attention = self.prob(attention)
         out = attention * feature
-        out = self.gamma * out + feature
-        
         return out
 
+
 class PSM(nn.Module):
-    def __init__(self):
+    def __init__(self, num_classes):
         super(PSM, self).__init__()
-        self.gamma = nn.Parameter(torch.zeros(1))
+        self.gamma = nn.Parameter(torch.zeros(1, 1, 1, 1, num_classes))
         self.softmax = nn.Softmax(dim=-1)
 
+
     def forward(self, feature, map):
-        map = map[:,1,:,:].unsqueeze(1)
+        features = []
+        for i in range(map.shape[1]):
+            features.append(self.psm(feature, map, i).unsqueeze(-1))
+        features = torch.cat(features, dim=-1)
+        weighted_features = features * self.gamma
+        return feature + weighted_features.sum(-1)
+    
+    # def psm(self, feature, map, class_id):
+    #     cls_pred = map[:,class_id,:,:].unsqueeze(1)
+    #     m_batchsize, C, height, width = feature.size()
+    #     feature_enhance = []
+    #     for i in range(0,C):
+    #         feature_channel = feature[:, i, :, :].unsqueeze(1)
+    #         proj_query = feature_channel.view(m_batchsize, -1, width * height).permute(0, 2, 1)
+    #         proj_key = cls_pred.view(m_batchsize, -1, width * height)
+    #         energy = torch.bmm(proj_query, proj_key)
+    #         attention = self.softmax(energy)
+    #         proj_value = feature_channel.view(m_batchsize, -1, width * height)
+    #         out = torch.bmm(proj_value, attention.permute(0, 2, 1))
+    #         out = out.view(m_batchsize, 1, height, width)
+    #         feature_enhance.append(out)
+    #     feature_enhance = torch.cat(feature_enhance,dim=1)
+    #     return feature_enhance
+
+    def psm(self, feature, map, class_id):
+        cls_pred = map[:, class_id, :, :].unsqueeze(1)  # Get class-specific prediction map
         m_batchsize, C, height, width = feature.size()
         feature_enhance = []
         for i in range(0,C):
             feature_channel = feature[:, i, :, :].unsqueeze(1)
             proj_query = feature_channel.view(m_batchsize, -1, width * height).permute(0, 2, 1)
-            proj_key = map.view(m_batchsize, -1, width * height)
+            proj_key = cls_pred.view(m_batchsize, -1, width * height)
             energy = torch.bmm(proj_query, proj_key)
             attention = self.softmax(energy)
             proj_value = feature_channel.view(m_batchsize, -1, width * height)
             out = torch.bmm(proj_value, attention.permute(0, 2, 1))
             out = out.view(m_batchsize, 1, height, width)
             feature_enhance.append(out)
-        feature_enhance = torch.cat(feature_enhance,dim=1)
-        final_feature = self.gamma * feature_enhance + feature
-        return final_feature
+        return torch.cat(feature_enhance,dim=1)
 
 
 class MBDC(nn.Module):
@@ -313,7 +343,7 @@ class MBDC(nn.Module):
 
 @model_registry.register("MCCMNet")
 class MCCMNet(SemanticSegmentationAdapter):
-    def __init__(self, channel, num_classes, *args, **kwargs):
+    def __init__(self, channel, num_classes, uncertainty=True, *args, **kwargs):
         super(MCCMNet, self).__init__(*args, **kwargs)
         vgg16_bn = models.vgg16_bn(pretrained=True)
         self.inc = vgg16_bn.features[:5]  # 64
@@ -332,13 +362,13 @@ class MCCMNet(SemanticSegmentationAdapter):
 
         self.decoder = SemanticFPNDecoder(channel = channel,feature_strides=[4, 8, 16, 32],num_classes=num_classes)
 
-        self.cgm = CGM()
-        self.psm = PSM()
+        self.cgm = CGM(num_classes)
+        self.psm = PSM(num_classes)
 
-        self.ufm_layer4 = MultiClassUAFM(high_channel = channel,low_channel = channel, out_channel = channel, num_classes=num_classes)
-        self.ufm_layer3 = MultiClassUAFM(high_channel = channel,low_channel = channel, out_channel = channel, num_classes=num_classes)
-        self.ufm_layer2 = MultiClassUAFM(high_channel = channel,low_channel = channel, out_channel = channel,num_classes=num_classes)
-        self.ufm_layer1 = MultiClassUAFM(high_channel = channel,low_channel = channel, out_channel = channel, num_classes=num_classes)
+        self.ufm_layer4 = MultiClassUAFM(high_channel = channel,low_channel = channel, out_channel = channel, num_classes=num_classes, uncertainty=uncertainty)
+        self.ufm_layer3 = MultiClassUAFM(high_channel = channel,low_channel = channel, out_channel = channel, num_classes=num_classes, uncertainty=uncertainty)
+        self.ufm_layer2 = MultiClassUAFM(high_channel = channel,low_channel = channel, out_channel = channel,num_classes=num_classes, uncertainty=uncertainty)
+        self.ufm_layer1 = MultiClassUAFM(high_channel = channel,low_channel = channel, out_channel = channel, num_classes=num_classes, uncertainty=uncertainty)
 
 
 

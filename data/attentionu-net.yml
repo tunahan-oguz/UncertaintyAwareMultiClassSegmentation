@@ -2,16 +2,21 @@ dataset:
   train:
     type: RescueNet
     num_workers: 6
-    root_dir: Path_To_RescueNet
+    root_dir: &root /home/tuntun/datasets/RescueNet
     mode: train
     n_classes: &N 8
   valid:
     type: RescueNet
     num_workers: 6
-    root_dir: Path_To_RescueNet
+    root_dir: *root
     mode: val
     n_classes: *N
-
+  test:
+    type: RescueNet
+    num_workers: 6
+    root_dir: *root
+    mode: test
+    n_classes: *N
 
 model:
   type: AttU_Net

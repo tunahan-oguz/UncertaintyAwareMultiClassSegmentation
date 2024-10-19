@@ -1,4 +1,4 @@
-# This is the training configuration of MCCMNET, which is claimed to be state-of-the-art on the RescueNet dataset.
+# This is the training configuration of MCCMNET, which is presented in the paper.
 dataset:
   train:
     type: RescueNet
@@ -14,7 +14,13 @@ dataset:
     mode: val
     n_classes: *N
     img_sz: [720, 720]
-
+  test:
+    type: RescueNet
+    num_workers: 6
+    root_dir: /home/tuntun/datasets/RescueNet # path to the root folder of data 
+    mode: test
+    n_classes: *N
+    img_sz: [720, 720]
 
 model:
   type: MCCMNet
@@ -43,7 +49,7 @@ metrics:
         K: *N
 
 hypes:
-  batch_size: 4
+  batch_size: 2
   epochs: 105
   lr: 0.0001
 

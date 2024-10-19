@@ -28,7 +28,7 @@
                 "--project",
                 "mccmnet",
                 "--data",
-                "data/semantic_segmentation/MC_UAVGG.yml",
+                "data/mccm-net.yml",
             ]
         },
     ]
