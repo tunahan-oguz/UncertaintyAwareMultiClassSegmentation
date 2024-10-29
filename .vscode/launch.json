@@ -26,7 +26,7 @@
             "args": [
                 "train",
                 "--project",
-                "mccmnet",
+                "debug",
                 "--data",
                 "data/mccm-net.yml",
             ]

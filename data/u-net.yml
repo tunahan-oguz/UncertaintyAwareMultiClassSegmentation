@@ -45,7 +45,7 @@ metrics:
 
 hypes:
   batch_size: 3
-  epochs: 100
+  epochs: 105
   lr: 0.001
 
 optimizers:

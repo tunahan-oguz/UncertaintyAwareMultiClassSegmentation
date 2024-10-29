@@ -27,6 +27,7 @@ model:
   args:
     channel: 32
     num_classes: *N
+    # uncertainty: False
 
 callbacks:
   ModelCheckpoint:
@@ -50,7 +51,7 @@ metrics:
 
 hypes:
   batch_size: 2
-  epochs: 105
+  epochs: 90
   lr: 0.0001
 
 optimizers:

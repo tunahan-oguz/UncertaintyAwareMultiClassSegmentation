@@ -119,6 +119,8 @@ class TorchVisionDataset(Dataset):
         images = self.images_to_tensors(transformed["images"])[0]
 
         return {"inputs": images, "labels": label}
+    
+    
 class RescueNet(Dataset):
     """RescueNet-v2.0 dataset: ....
 

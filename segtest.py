@@ -1,15 +1,13 @@
 import argparse
-import os
 import cv2
 import numpy as np
 import yaml
 from torch.utils.data import DataLoader
-from train_app.loss.metrics import IoU, PixelAccuracy, MAF1, MAR, MAP
 import train_app.utils as utils
 import train_app.dataset
 import torch
 import tqdm
-import train_app.models as m
+import train_app.models as m #noqa
 from train_app.utils import print_config
 from eval import Evaluator
 
@@ -81,10 +79,7 @@ def main(args):
 
 
     if args.vis:
-        os.makedirs("./images/Entropy")
-        os.makedirs("./images/Mask")
-        os.makedirs("./images/Image")
-        os.makedirs("./images/Pred")
+
         for inp in tqdm.tqdm(dataset):
             org_image = cv2.resize(cv2.imread(inp["path"]), inp["inputs"].shape[1 :])
             image =[im.unsqueeze(0).cuda() for im in inp["inputs"]] if isinstance(inp["inputs"], list) else inp["inputs"].unsqueeze(0).cuda()
@@ -101,11 +96,10 @@ def main(args):
 
             colored_mask = paint_mask(mask)
             colored_prediction = paint_mask(torch.tensor(predicted_mask))
-            im_name = os.path.basename(inp["path"])
-            cv2.imwrite(os.path.join("images","Entropy", im_name), entropy_heat)
-            cv2.imwrite(os.path.join("images","Mask", im_name), cv2.cvtColor(colored_mask, cv2.COLOR_BGR2RGB))
-            cv2.imwrite(os.path.join("images","Image", im_name), org_image)
-            cv2.imwrite(os.path.join("images","Pred", im_name), cv2.cvtColor(colored_prediction, cv2.COLOR_BGR2RGB))
+            cv2.imshow("Entropy", entropy_heat)
+            cv2.imshow("Mask", cv2.cvtColor(colored_mask, cv2.COLOR_BGR2RGB))
+            cv2.imshow("Image", org_image)
+            cv2.imshow("Pred", cv2.cvtColor(colored_prediction, cv2.COLOR_BGR2RGB))
             key = cv2.waitKey(0) & 0xFF
             if key == ord('q'): break
             
@@ -119,8 +113,6 @@ def main(args):
             with torch.no_grad():
                 logits = model(image)
                 logits = logits[-1] if isinstance(logits, tuple) else logits
-                probs = torch.softmax(logits, 1)
-            predicted_mask = torch.argmax(logits, 1)
             
             ev.add_batch(mask, logits)
 
@@ -130,15 +122,17 @@ def main(args):
         print("Precision", ev.Precision)
         print("Recall", ev.Recall)
         print("F1", ev.F1)
+        print("IoU_dict", ev.IoU_dict)
+        print("meanIoU", ev.mIoU)
 
         
 
     
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--conf", required=False, default="data/u-net.yml")
+    parser.add_argument("--conf", required=False, default="run/train/ablation1/mccm-net.yml")
     parser.add_argument("--vis", required=False, default=True, type=bool)
-    parser.add_argument("--pth", required=False, default="run/train/UNet1/weights/best.ckpt")
+    parser.add_argument("--pth", required=False, default="run/train/ablation1/weights/best.ckpt")
     parser.add_argument("--K", required=False, default=8, type=int)
 
     args = parser.parse_args()
