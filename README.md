@@ -14,7 +14,7 @@ MCCM-Net outperforms traditional models like U-Net and Attention-U-Net in terms 
 | Attention U-Net| 0.789| 0.873          | 0.914     | 0.873  | 0.879 | 34.8M      | RescueNet|
 | U-Net          | 0.783| 0.869          | 0.911     | 0.869  | 0.873 | 31M        | RescueNet|
 
-The repository also includes results from additional ablation studies and comparisons on other datasets like Mass-Building and WHU.
+The repository also includes Mass-Building and WHU reproduction of UANet.
 
 In the image below you can see the uncertainty heat maps of the compared models.
 ![Alt text](https://github.com/tunahan-oguz/UncertaintyAwareMultiClassSegmentation/blob/main/img/combined_image.png?raw=true)
@@ -24,7 +24,7 @@ In the image below you can see the uncertainty heat maps of the compared models.
 - `segtest.py`: Script to evaluate the trained models.
 - `models/`: Directory containing the model definitions.
 - `dataset.py/`: File containing dataset classes.
-- `utils/`: Utility scripts for data preprocessing and augmentation.
+- `utils/`: Utility functions for data preprocessing and object initializations.
 
 ## Installation
 
@@ -54,11 +54,11 @@ python3 segtest.py --pth path_to_your_model_checkpoint --conf config_file_used_t
 ```
 
 Optional command line arguments of segtest.py:
---vis True if you want to see the generated masks and uncertainty maps by model, False (default) to just calculate the metrics.
+- --vis True if you want to see the generated masks and uncertainty maps by model, False (default) to just calculate the metrics.
 
 ## Acknowledgements
 
-We would like to thank the authors of U-Net, Attention U-Net, and UA-Net for their contributions to the field of deep learning for image segmentation, which greatly inspired this work.
+We would like to thank the authors of, UA-Net for their contributions to the field of deep learning for image segmentation, which greatly inspired this work.
 
 <!-- ## Citation
 
