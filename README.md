@@ -2,7 +2,7 @@
 
 ## Overview
 
-Welcome to the official GitHub repository for the paper **"Multi-Class Certainty Mapped Network for High Precision Segmentation of High-Altitude Imagery"**. This repository contains all the PyTorch scripts and resources necessary to reproduce the experiments and results presented in the [paper][https://www.spiedigitallibrary.org/conference-proceedings-of-spie/13263/1326309/Multiclass-certainty-mapped-network-for-high-precision-segmentation-of-high/10.1117/12.3041825.full].
+Welcome to the official GitHub repository for the paper **"Multi-Class Certainty Mapped Network for High Precision Segmentation of High-Altitude Imagery"**. This repository contains all the PyTorch scripts and resources necessary to reproduce the experiments and results presented in the [paper](https://www.spiedigitallibrary.org/conference-proceedings-of-spie/13263/1326309/Multiclass-certainty-mapped-network-for-high-precision-segmentation-of-high/10.1117/12.3041825.full).
 
 ## Results
 
