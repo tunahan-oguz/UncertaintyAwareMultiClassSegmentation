@@ -27,7 +27,7 @@ class MultiClassUAFM(nn.Module):
     def rank_algorithm(map): # map needs to be softmaxed
         x = map * torch.log(map + 1e-7)
         x = - 1 * torch.sum(x, dim=1)
-        x = torch.clamp(x, min=1)
+        x = torch.exp(x)
         return x.unsqueeze(1).detach()
 
     def __init__(self, high_channel, low_channel,out_channel,num_classes, uncertainty=True):
